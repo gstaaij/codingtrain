@@ -3,6 +3,8 @@
 #include <math.h>
 #include "colors.h"
 
+#define CIRCLE_STROKE_WIDTH 2.0
+
 Circle circleCreate(double bend, double x, double y) {
     return (Circle){
         .center = (Complex) { x, y },
@@ -14,8 +16,8 @@ Circle circleCreate(double bend, double x, double y) {
 void circleDraw(Circle* this) {
     DrawRing(
         (Vector2) { this->center.a, this->center.b },
-        this->radius - 1,
-        this->radius + 1,
+        this->radius - CIRCLE_STROKE_WIDTH/2,
+        this->radius + CIRCLE_STROKE_WIDTH/2,
         0, 360,
         1,
         FOREGROUND_COLOR
