@@ -15,41 +15,23 @@
 
 #define QUEUE_ADD_TRIPLET(queue, c1, c2, c3) arrput(queue, c1); arrput(queue, c2); arrput(queue, c3)
 
+// All circles in the gasket
 Circle* allCircles = NULL;
+// Queue for circles to process for the next generation
 Circle* queue = NULL;
+// The next queue (this needs to be global because)
 Circle* nextQueue = NULL;
 
+// Whether we're done generating
+bool done = false;
+
+// The current seed. Used for displaying the text
 unsigned int currentSeed = 0;
-
-void nextGeneration() {
-    nextQueue = NULL;
-    assert(arrlen(queue) % 3 == 0 && "queue length not a multiple of 3");
-    for (int i = 0; i < arrlen(queue); i += 3) {
-        Circle c1 = queue[i + 0];
-        Circle c2 = queue[i + 1];
-        Circle c3 = queue[i + 2];
-
-        double* k4 = descartes(c1, c2, c3);
-        Circle* newCircles = descartesComplex(c1, c2, c3, k4);
-
-        for (int j = 0; j < arrlen(newCircles); ++j) {
-            if (descartesValidateCircle(allCircles, newCircles[j], c1, c2, c3)) {
-                arrput(allCircles, newCircles[j]);
-                QUEUE_ADD_TRIPLET(nextQueue, c1, c2, newCircles[j]);
-                QUEUE_ADD_TRIPLET(nextQueue, c1, c3, newCircles[j]);
-                QUEUE_ADD_TRIPLET(nextQueue, c2, c3, newCircles[j]);
-            }
-        }
-
-        arrfree(newCircles);
-    }
-    arrfree(queue);
-    queue = nextQueue;
-}
 
 // If seed is 0, a random seed is used
 // Returns the seed it used
 unsigned int reset(unsigned int seed) {
+    // Remove all circles by freeing the dynamic array for the circles and for the queue
     if (allCircles) {
         arrfree(allCircles);
         allCircles = NULL;
@@ -59,6 +41,10 @@ unsigned int reset(unsigned int seed) {
         queue = NULL;
     }
 
+    // Reset the done flag
+    done = false;
+
+    // Set the seed
     if (seed) {
         SetRandomSeed(seed);
     } else {
@@ -68,29 +54,68 @@ unsigned int reset(unsigned int seed) {
         SetRandomSeed(seed);
     }
 
+    // The first circle centered in the window
     Circle c1 = circleCreate(-1/ (WIDTH / 2 - WIDTH/20), WIDTH/2, HEIGHT/2);
     
     double r2Min = 100;
     double r2Max = c1.radius / 2;
+    // A random radius for the second circle
     double r2 = (double) GetRandomValue(0, INT32_MAX) / INT32_MAX * (r2Max - r2Min) + r2Min;
 
     double r = c1.radius - r2;
     double theta = (double) GetRandomValue(0, INT32_MAX) / INT32_MAX * 2 * PI;
+    // For positioning the second (and third) circle
     Complex v = (Complex) { r * cos(theta), r * sin(theta) };
+
+    // Second circle, positioned randomly within the first
     Circle c2 = circleCreate(1 / r2, WIDTH/2 + v.a, HEIGHT/2 + v.b);
 
     double r3 = r;
     theta += PI;
     r = c1.radius - r3;
     v = (Complex) { r * cos(theta), r * sin(theta) };
+
+    // Third circle positioned relative to the first and second
     Circle c3 = circleCreate(1 / r3, WIDTH/2 + v.a, HEIGHT/2 + v.b);
 
+    // Add all the circles to the dynamic array
     arrput(allCircles, c1);
     arrput(allCircles, c2);
     arrput(allCircles, c3);
+    // Initial triplet for generating next generation of circles
     QUEUE_ADD_TRIPLET(queue, c1, c2, c3);
 
     return seed;
+}
+
+void nextGeneration() {
+    nextQueue = NULL;
+    assert(arrlen(queue) % 3 == 0 && "queue length not a multiple of 3");
+    for (int i = 0; i < arrlen(queue); i += 3) {
+        Circle c1 = queue[i + 0];
+        Circle c2 = queue[i + 1];
+        Circle c3 = queue[i + 2];
+
+        // Calculate curvatures for potential new circles
+        double* k4 = descartes(c1, c2, c3);
+        // Generate new circles based on Descartes' theorem
+        Circle* newCircles = descartesComplex(c1, c2, c3, k4);
+
+        for (int j = 0; j < arrlen(newCircles); ++j) {
+            if (descartesValidateCircle(allCircles, newCircles[j], c1, c2, c3)) {
+                arrput(allCircles, newCircles[j]);
+                // New triplets formed with the new circle for the next generation
+                QUEUE_ADD_TRIPLET(nextQueue, c1, c2, newCircles[j]);
+                QUEUE_ADD_TRIPLET(nextQueue, c1, c3, newCircles[j]);
+                QUEUE_ADD_TRIPLET(nextQueue, c2, c3, newCircles[j]);
+            }
+        }
+
+        arrfree(newCircles);
+    }
+    // The memory for the previous queue should be freed
+    arrfree(queue);
+    queue = nextQueue;
 }
 
 int main() {
@@ -98,14 +123,40 @@ int main() {
 
     SetTargetFPS(60);
 
+    // Setup
     currentSeed = reset(0);
 
     while (!WindowShouldClose()) {
         BeginDrawing();
             ClearBackground(BACKGROUND_COLOR);
 
+            // Display all circles
+            for (int i = 0; i < arrlen(allCircles); ++i) {
+                circleDraw(&allCircles[i]);
+            }
+
+            if (!done) {
+                // The amount of circles before generating new ones
+                int lenBefore = arrlen(allCircles);
+
+                // Generate the next generation of circles
+                nextGeneration();
+
+                // The amount of circles that has been generated this frame
+                int lenDiff = arrlen(allCircles) - lenBefore;
+
+                // We are done if no new circles have generated
+                if (lenDiff == 0) {
+                    done = true;
+
+                    // The queue isn't needed anymore, we can free it just in case
+                    arrfree(queue);
+                }
+            }
+
             int fontSize = 24;
             int y = 5;
+            // Display some information, like FPS and the current seed
             DrawText("FPS", 5, y, fontSize, FOREGROUND_COLOR);
             y += fontSize;
             DrawText(TextFormat("%d", GetFPS()), 5, y, fontSize, FOREGROUND_COLOR);
@@ -113,19 +164,20 @@ int main() {
             DrawText("Seed", 5, y, fontSize, FOREGROUND_COLOR);
             y += fontSize;
             DrawText(TextFormat("%lu", currentSeed), 5, y, fontSize, FOREGROUND_COLOR);
-
-            for (int i = 0; i < arrlen(allCircles); ++i) {
-                circleDraw(&allCircles[i]);
+            // Display "Done!" if we are done generating
+            if (done) {
+                y += fontSize * 1.5;
+                DrawText("Done!", 5, y, fontSize, FOREGROUND_COLOR);
             }
 
-            nextGeneration();
-
+            // Start over with a new random seed if the user presses the space bar
             if (IsKeyPressed(KEY_SPACE))
                 currentSeed = reset(0);
 
         EndDrawing();
     }
 
+    // Free all of the memory used by the circles
     arrfree(allCircles);
     arrfree(queue);
 

@@ -30,6 +30,7 @@ bool circleIsTangent(const Circle c1, const Circle c2, const double epsilon) {
     double r1 = c1.radius;
     double r2 = c2.radius;
 
+    // Tangency check based on distances and radii
     return (fabs(d -     (r1 + r2)) < epsilon ||
             fabs(d - fabs(r2 - r1)) < epsilon );
 }

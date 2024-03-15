@@ -23,10 +23,13 @@ Complex complexMult(const Complex c1, const Complex c2) {
 }
 
 Complex complexSqrt(const Complex this) {
+    // Convert to polar form
     double r = sqrt(this.a * this.a + this.b * this.b);
     double theta = atan2(this.b, this.a);
+    // Calculate the square root of the radius and use half the angle to get the square root of the complex number
     r = sqrt(r);
     theta = theta / 2.0;
+    // Convert back to rectangular form
     return (Complex) { r * cos(theta), r * sin(theta) };
 }
 

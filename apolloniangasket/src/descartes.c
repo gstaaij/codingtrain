@@ -2,7 +2,7 @@
 #include <math.h>
 #include "stb_ds.h"
 
-// Constants for validating the circles
+// Tolerance for calculating tangency and overlap
 #define VALIDATE_EPSILON 0.1
 #define MIN_CIRCLE_SIZE 1.0
 
@@ -54,22 +54,22 @@ Circle* descartesComplex(Circle c1, Circle c2, Circle c3, double* k4) {
     return result;
 }
 
-// c4 is the circle we're verifying, c1, c2 and c3 are the circles we're checking for tangentialness
-// otherCircles is a list with all of the circles besides c4
-bool descartesValidateCircle(const Circle* otherCircles, Circle c4, Circle c1, Circle c2, Circle c3) {
-    if (c4.radius < MIN_CIRCLE_SIZE) return false;
+bool descartesValidateCircle(const Circle* otherCircles, Circle newCircle, Circle c1, Circle c2, Circle c3) {
+    // Discards too small circles to avoid infinite recursion
+    if (newCircle.radius < MIN_CIRCLE_SIZE) return false;
 
     for (int i = 0; i < arrlen(otherCircles); ++i) {
         Circle other = otherCircles[i];
-        double d = complexDistance(c4.center, other.center);
-        double radiusDiff = fabs(c4.radius - other.radius);
+        double d = complexDistance(newCircle.center, other.center);
+        double radiusDiff = fabs(newCircle.radius - other.radius);
+        // Ensures the new circle doesn't already exist
         if (d < VALIDATE_EPSILON && radiusDiff < VALIDATE_EPSILON) return false;
     }
 
     // Check if all 4 circles are mutually tangential
-    if (!circleIsTangent(c4, c1, VALIDATE_EPSILON)) return false;
-    if (!circleIsTangent(c4, c2, VALIDATE_EPSILON)) return false;
-    if (!circleIsTangent(c4, c3, VALIDATE_EPSILON)) return false;
+    if (!circleIsTangent(newCircle, c1, VALIDATE_EPSILON)) return false;
+    if (!circleIsTangent(newCircle, c2, VALIDATE_EPSILON)) return false;
+    if (!circleIsTangent(newCircle, c3, VALIDATE_EPSILON)) return false;
 
     return true;
 }
