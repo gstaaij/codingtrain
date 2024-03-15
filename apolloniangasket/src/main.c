@@ -109,7 +109,7 @@ int main() {
             DrawText("FPS", 5, y, fontSize, FOREGROUND_COLOR);
             y += fontSize;
             DrawText(TextFormat("%d", GetFPS()), 5, y, fontSize, FOREGROUND_COLOR);
-            y += fontSize;
+            y += fontSize * 1.5;
             DrawText("Seed", 5, y, fontSize, FOREGROUND_COLOR);
             y += fontSize;
             DrawText(TextFormat("%lu", currentSeed), 5, y, fontSize, FOREGROUND_COLOR);
