@@ -138,6 +138,7 @@ void printUsageAndFail(char* program) {
     TraceLog(LOG_ERROR, "Usage: %s [options] [seed]", program);
     TraceLog(LOG_ERROR, "Possible options:");
     TraceLog(LOG_ERROR, "    --debug     Enables debug information");
+    TraceLog(LOG_ERROR, "    --dark      Enables dark mode");
     TraceLog(LOG_FATAL, "");
 }
 
@@ -149,6 +150,13 @@ int main(int argc, char** argv) {
 
         if (strcmp(arg, "--debug") == 0) {
             SetTraceLogLevel(LOG_DEBUG);
+            if (argc > 0) arg = shift_args(&argc, &argv);
+            else          arg = NULL;
+        }
+
+        if (arg && strcmp(arg, "--dark") == 0) {
+            colorSetDarkMode(true);
+
             if (argc > 0) arg = shift_args(&argc, &argv);
             else          arg = NULL;
         }
@@ -179,11 +187,11 @@ int main(int argc, char** argv) {
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-            ClearBackground(BACKGROUND_COLOR);
+            ClearBackground(colorGetBackground());
 
             // Display all circles
             for (int i = 0; i < arrlen(allCircles); ++i) {
-                circleDraw(&allCircles[i]);
+                circleDraw(&allCircles[i], colorGetForeground());
             }
 
             if (!done) {
@@ -208,17 +216,17 @@ int main(int argc, char** argv) {
             int fontSize = 24;
             int y = 5;
             // Display some information, like FPS and the current seed
-            DrawText("FPS", 5, y, fontSize, FOREGROUND_COLOR);
+            DrawText("FPS", 5, y, fontSize, colorGetForeground());
             y += fontSize;
-            DrawText(TextFormat("%d", GetFPS()), 5, y, fontSize, FOREGROUND_COLOR);
+            DrawText(TextFormat("%d", GetFPS()), 5, y, fontSize, colorGetForeground());
             y += fontSize * 1.5;
-            DrawText("Seed", 5, y, fontSize, FOREGROUND_COLOR);
+            DrawText("Seed", 5, y, fontSize, colorGetForeground());
             y += fontSize;
-            DrawText(TextFormat("%lu", currentSeed), 5, y, fontSize, FOREGROUND_COLOR);
+            DrawText(TextFormat("%lu", currentSeed), 5, y, fontSize, colorGetForeground());
             // Display "Done!" if we are done generating
             if (done) {
                 y += fontSize * 1.5;
-                DrawText("Done!", 5, y, fontSize, FOREGROUND_COLOR);
+                DrawText("Done!", 5, y, fontSize, colorGetForeground());
             }
 
             // Start over with a new random seed if the user presses the space bar

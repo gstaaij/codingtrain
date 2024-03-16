@@ -1,7 +1,5 @@
 #include "circle.h"
-#include <raylib.h>
 #include <math.h>
-#include "colors.h"
 
 #define CIRCLE_STROKE_WIDTH 2.0
 
@@ -13,14 +11,14 @@ Circle circleCreate(double bend, double x, double y) {
     };
 }
 
-void circleDraw(Circle* this) {
+void circleDraw(Circle* this, const Color color) {
     DrawRing(
         (Vector2) { this->center.a, this->center.b },
         this->radius - CIRCLE_STROKE_WIDTH/2,
         this->radius + CIRCLE_STROKE_WIDTH/2,
         0, 360,
         1,
-        FOREGROUND_COLOR
+        color
     );
 }
 
