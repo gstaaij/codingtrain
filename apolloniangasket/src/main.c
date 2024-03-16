@@ -11,9 +11,6 @@
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
-// Uncomment the following line to enable the debug information
-// #define DEBUG_INFO
-
 #define WIDTH 800.0
 #define HEIGHT 800.0
 
