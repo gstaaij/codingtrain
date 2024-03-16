@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <sys/time.h>
 #include "raylib.h"
@@ -9,6 +10,9 @@
 
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
+
+// Uncomment the following line to enable the debug information
+// #define DEBUG_INFO
 
 #define WIDTH 800.0
 #define HEIGHT 800.0
@@ -54,6 +58,8 @@ unsigned int reset(unsigned int seed) {
         SetRandomSeed(seed);
     }
 
+    TraceLog(LOG_DEBUG, "====================");
+
     // The first circle centered in the window
     Circle c1 = circleCreate(-1/ (WIDTH / 2 - WIDTH/20), WIDTH/2, HEIGHT/2);
     
@@ -63,20 +69,24 @@ unsigned int reset(unsigned int seed) {
     double r2 = (double) GetRandomValue(0, INT32_MAX) / INT32_MAX * (r2Max - r2Min) + r2Min;
 
     double r = c1.radius - r2;
+    TraceLog(LOG_DEBUG, "radius of c2: %lf", r);
     double theta = (double) GetRandomValue(0, INT32_MAX) / INT32_MAX * 2 * PI;
     // For positioning the second (and third) circle
     Complex v = (Complex) { r * cos(theta), r * sin(theta) };
 
     // Second circle, positioned randomly within the first
     Circle c2 = circleCreate(1 / r2, WIDTH/2 + v.a, HEIGHT/2 + v.b);
+    TraceLog(LOG_DEBUG, "position of c2: %lf + %lf * i", c2.center.a, c2.center.b);
 
     double r3 = r;
     theta += PI;
     r = c1.radius - r3;
+    TraceLog(LOG_DEBUG, "radius of c3: %lf", r);
     v = (Complex) { r * cos(theta), r * sin(theta) };
 
     // Third circle positioned relative to the first and second
     Circle c3 = circleCreate(1 / r3, WIDTH/2 + v.a, HEIGHT/2 + v.b);
+    TraceLog(LOG_DEBUG, "position of c3: %lf + %lf * i", c3.center.a, c3.center.b);
 
     // Add all the circles to the dynamic array
     arrput(allCircles, c1);
@@ -118,13 +128,57 @@ void nextGeneration() {
     queue = nextQueue;
 }
 
-int main() {
+// Stolen from nob (https://github.com/tsoding/musializer/blob/master/src/nob.h)
+char* shift_args(int* argc, char*** argv) {
+    assert(*argc > 0);
+    char* result = **argv;
+    (*argv) += 1;
+    (*argc) -= 1;
+    return result;
+}
+
+void printUsageAndFail(char* program) {
+    TraceLog(LOG_ERROR, "Usage: %s [options] [seed]", program);
+    TraceLog(LOG_ERROR, "Possible options:");
+    TraceLog(LOG_ERROR, "    --debug     Enables debug information");
+    TraceLog(LOG_FATAL, "");
+}
+
+int main(int argc, char** argv) {
+    // Handling arguments
+    char* program = shift_args(&argc, &argv);
+    if (argc > 0) {
+        char* arg = shift_args(&argc, &argv);
+
+        if (strcmp(arg, "--debug") == 0) {
+            SetTraceLogLevel(LOG_DEBUG);
+            if (argc > 0) arg = shift_args(&argc, &argv);
+            else          arg = NULL;
+        }
+        
+        if (arg) {
+            for (char* x = arg; *x != 0; ++x) {
+                if (!isdigit(*x)) {
+                    TraceLog(LOG_ERROR, "\"%s\" is not a number\n", arg);
+                    printUsageAndFail(program);
+                }
+            }
+            currentSeed = strtoul(arg, 0L, 10);
+        }
+    }
+
+    if (argc > 0) {
+        TraceLog(LOG_ERROR, "Too many arguments provided\n");
+        printUsageAndFail(program);
+    }
+    
+
     InitWindow(WIDTH, HEIGHT, "Apollonian Gasket");
 
     SetTargetFPS(60);
 
     // Setup
-    currentSeed = reset(0);
+    currentSeed = reset(currentSeed);
 
     while (!WindowShouldClose()) {
         BeginDrawing();
