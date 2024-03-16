@@ -8,4 +8,5 @@ This is a recreation of the coding challenge [Apollonian Gasket](https://www.you
 ![A screenshot of the program in light mode](readme-images/lightMode.png)
 
 ![A screenshot of the program in dark mode](readme-images/darkMode.png)
+
 *(You can only enable dark mode by recompiling the program at the moment)*
