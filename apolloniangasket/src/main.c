@@ -2,8 +2,8 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <sys/time.h>
+#include <math.h>
 #include "raylib.h"
-#include "raymath.h"
 #include "colors.h"
 #include "circle.h"
 #include "descartes.h"
@@ -58,9 +58,11 @@ unsigned int reset(unsigned int seed) {
     TraceLog(LOG_DEBUG, "====================");
 
     // The first circle centered in the window
-    Circle c1 = circleCreate(-1/ (WIDTH / 2 - WIDTH/20), WIDTH/2, HEIGHT/2);
+    double scaleValue = fmin(WIDTH, HEIGHT);
+    double r1 = scaleValue/2 - scaleValue/20;
+    Circle c1 = circleCreate(-1/r1, WIDTH/2, HEIGHT/2);
     
-    double r2Min = 100;
+    double r2Min = scaleValue / 8;
     double r2Max = c1.radius / 2;
     // A random radius for the second circle
     double r2 = (double) GetRandomValue(0, INT32_MAX) / INT32_MAX * (r2Max - r2Min) + r2Min;
